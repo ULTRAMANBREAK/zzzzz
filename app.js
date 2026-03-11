@@ -1,8 +1,8 @@
 // MQTT 配置
 const MQTT_CONFIG = {
     host: 'broker.emqx.io',
-    port: 8083,
-    protocol: 'ws',
+    port: 8084,
+    protocol: 'wss',
     clientId: 'clam_controller_' + Math.random().toString(16).substr(2, 8)
 };
 
