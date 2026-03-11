@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>蛤蜊破碎控制台</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🦪 蛤蜊破碎控制台</h1>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot"></span>
+                <span class="status-text">连接中...</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- 控制按钮区域 -->
+            <div class="control-panel">
+                <button class="btn btn-start" id="startBtn" disabled>
+                    <span class="btn-icon">▶️</span>
+                    <span class="btn-text">启动破碎</span>
+                </button>
+                <button class="btn btn-stop" id="stopBtn" disabled>
+                    <span class="btn-icon">⏹️</span>
+                    <span class="btn-text">停止</span>
+                </button>
+            </div>
+
+            <!-- 电机占空比控制面板（启动后显示） -->
+            <div class="motor-control hidden" id="motorControl">
+                <div class="motor-header">
+                    <span class="motor-name">直流减速电机</span>
+                    <span class="motor-badge">ID: 0x01</span>
+                </div>
+                <div class="duty-display">
+                    <span id="dutyValue">50</span>
+                    <span class="duty-unit">%</span>
+                </div>
+                <div class="slider-row">
+                    <span class="slider-label">0%</span>
+                    <input type="range" id="dutySlider" min="0" max="100" value="50" class="duty-slider">
+                    <span class="slider-label">100%</span>
+                </div>
+                <div class="slider-hint">← 左右滑动调节占空比，松开后发送指令 →</div>
+            </div>
+
+            <!-- 实时监控画面 -->
+            <div class="camera-panel">
+                <h2>📹 实时监控</h2>
+                <div class="camera-container">
+                    <div class="camera-frame" id="cameraFrame">
+                        <img id="cameraImage" class="camera-image" src="http://192.168.5.123/stream" alt="ESP32视频流">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 状态显示区域 -->
+            <div class="status-panel">
+                <h2>实时状态</h2>
+                <div class="status-messages" id="statusMessages">
+                    <div class="status-item placeholder">等待状态消息...</div>
+                </div>
+            </div>
+
+            <!-- 连接信息 -->
+            <div class="info-panel">
+                <div class="info-item">
+                    <span class="info-label">MQTT服务器</span>
+                    <span class="info-value">ws://broker.emqx.io:8083/mqtt</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">控制主题</span>
+                    <span class="info-value">langou/device001/control</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">状态主题</span>
+                    <span class="info-value">langou/device001/status</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">视频流地址</span>
+                    <span class="info-value">http://192.168.5.123/stream</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MQTT.js 库 -->
+    <script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
