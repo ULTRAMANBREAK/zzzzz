@@ -21,17 +21,18 @@
             <div class="control-panel">
                 <button class="btn btn-start" id="startBtn" disabled>
                     <span class="btn-icon">▶️</span>
-                    <span class="btn-text">启动破碎</span>
+                    <span class="btn-text">启动机器</span>
                 </button>
                 <button class="btn btn-stop" id="stopBtn" disabled>
                     <span class="btn-icon">⏹️</span>
-                    <span class="btn-text">停止</span>
+                    <span class="btn-text">停止机器</span>
                 </button>
             </div>
 
-            <!-- 电机占空比控制面板（启动后显示） -->
+            <!-- 电机1：直流减速电机（启动后显示） -->
             <div class="motor-control hidden" id="motorControl">
                 <div class="motor-header">
+                    <span class="motor-label">电机 1</span>
                     <span class="motor-name">直流减速电机</span>
                     <span class="motor-badge">ID: 0x01</span>
                 </div>
@@ -44,25 +45,14 @@
                     <input type="range" id="dutySlider" min="0" max="100" value="50" class="duty-slider">
                     <span class="slider-label">100%</span>
                 </div>
-                <div class="slider-hint">← 左右滑动调节占空比，松开后发送指令 →</div>
+                <div class="slider-hint">← 滑动调节占空比，松开后发送指令 →</div>
             </div>
 
-            <!-- 频率控制电机按钮区域 -->
-            <div class="control-panel">
-                <button class="btn btn-start btn-freq-start" id="freqStartBtn" disabled>
-                    <span class="btn-icon">〰️</span>
-                    <span class="btn-text">启动频率</span>
-                </button>
-                <button class="btn btn-stop" id="freqStopBtn" disabled>
-                    <span class="btn-icon">⏹️</span>
-                    <span class="btn-text">停止</span>
-                </button>
-            </div>
-
-            <!-- 频率控制面板（启动后显示） -->
+            <!-- 电机2：86步进电机（启动后显示） -->
             <div class="motor-control motor-freq hidden" id="freqMotorControl">
                 <div class="motor-header">
-                    <span class="motor-name">频率控制电机</span>
+                    <span class="motor-label motor-label-freq">电机 2</span>
+                    <span class="motor-name">86步进电机</span>
                     <span class="motor-badge motor-badge-freq">ID: 0x02</span>
                 </div>
                 <div class="duty-display">
@@ -74,7 +64,7 @@
                     <input type="range" id="freqSlider" min="0" max="100" value="0" class="duty-slider freq-slider">
                     <span class="slider-label">2KHz</span>
                 </div>
-                <div class="slider-hint">← 左右滑动调节频率 (1KHz ~ 2KHz)，松开后发送指令 →</div>
+                <div class="slider-hint">← 滑动调节频率 (1KHz ~ 2KHz)，松开后发送指令 →</div>
             </div>
 
             <!-- 实时监控画面 -->
@@ -82,7 +72,7 @@
                 <h2>📹 实时监控</h2>
                 <div class="camera-container">
                     <div class="camera-frame" id="cameraFrame">
-                        <img id="cameraImage" class="camera-image" src="http://192.168.5.123/stream" alt="ESP32视频流">
+                        <img id="mjpeg-stream" class="camera-image" src="http://192.168.5.123/stream" alt="ESP32视频流">
                     </div>
                 </div>
             </div>

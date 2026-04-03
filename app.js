@@ -7,14 +7,15 @@ const MQTT_CONFIG = {
 };
 
 const TOPICS = {
-    control: 'langou/device001/control',
-    status: 'langou/device001/status'
+    control:   'langou/device001/control',
+    status:    'langou/device001/status',
+    camStatus: 'langou/cam/status'
 };
 
 // 电机定义（可扩展）
 const MOTORS = {
     0x01: { id: 0x01, name: '直流减速电机', defaultDuty: 50 },
-    0x02: { id: 0x02, name: '频率控制电机', defaultFreq: 0 }  // 0=1KHz, 100=2KHz
+    0x02: { id: 0x02, name: '86步进电机', defaultFreq: 0 }  // 0=1KHz, 100=2KHz
 };
 
 // 当前操作的电机 ID（后续多电机可改为动态切换）
@@ -22,9 +23,8 @@ const ACTIVE_MOTOR_ID = 0x01;
 
 // 全局状态
 let mqttClient = null;
-let motorRunning = false;
+let machineRunning = false;
 let currentDuty = MOTORS[ACTIVE_MOTOR_ID].defaultDuty;
-let freqMotorRunning = false;
 let currentFreqSlider = MOTORS[0x02].defaultFreq;  // 0-100，对应 1000-2000 Hz
 
 // DOM 元素
@@ -37,9 +37,6 @@ const elements = {
     motorControl: document.getElementById('motorControl'),
     dutySlider: document.getElementById('dutySlider'),
     dutyValue: document.getElementById('dutyValue'),
-    // 频率控制电机 (0x02)
-    freqStartBtn: document.getElementById('freqStartBtn'),
-    freqStopBtn: document.getElementById('freqStopBtn'),
     freqMotorControl: document.getElementById('freqMotorControl'),
     freqSlider: document.getElementById('freqSlider'),
     freqValue: document.getElementById('freqValue')
@@ -95,8 +92,14 @@ function handleConnect() {
             addStatusMessage('已连接到 MQTT 服务器', 'success');
             elements.startBtn.disabled = false;
             elements.stopBtn.disabled = false;
-            elements.freqStartBtn.disabled = false;
-            elements.freqStopBtn.disabled = false;
+        }
+    });
+
+    mqttClient.subscribe(TOPICS.camStatus, { qos: 1 }, (err) => {
+        if (err) {
+            console.error('订阅摄像头主题失败:', err);
+        } else {
+            console.log('订阅成功:', TOPICS.camStatus);
         }
     });
 }
@@ -104,15 +107,25 @@ function handleConnect() {
 // 处理接收到的消息
 function handleMessage(topic, message) {
     try {
-        if (topic === TOPICS.status) {
-            const payload = message.toString();
-            console.log(`收到消息 [${topic}]:`, payload);
+        const payload = message.toString();
+        console.log(`收到消息 [${topic}]:`, payload);
 
+        if (topic === TOPICS.status) {
             try {
                 const data = JSON.parse(payload);
                 addStatusMessage(JSON.stringify(data, null, 2), 'info');
             } catch (e) {
                 addStatusMessage(payload, 'info');
+            }
+        } else if (topic === TOPICS.camStatus) {
+            try {
+                const data = JSON.parse(payload);
+                if (data.stream_url) {
+                    document.getElementById('mjpeg-stream').src = data.stream_url;
+                    console.log('检测到摄像头新地址：', data.stream_url);
+                }
+            } catch (e) {
+                console.warn('摄像头状态消息解析失败:', e);
             }
         }
     } catch (error) {
@@ -180,17 +193,14 @@ function addStatusMessage(message, type = 'info') {
 }
 
 // 发布 MQTT 消息（统一出口）
+// extra 中可包含 motor_id；若不传则指令为机器级别（无 motor_id）
 function publishCommand(cmd, extra = {}) {
     if (!mqttClient || !mqttClient.connected) {
         addStatusMessage('未连接到服务器', 'error');
         return;
     }
 
-    const payload = JSON.stringify({
-        cmd,
-        motor_id: ACTIVE_MOTOR_ID,
-        ...extra
-    });
+    const payload = JSON.stringify({ cmd, ...extra });
 
     mqttClient.publish(TOPICS.control, payload, { qos: 1 }, (err) => {
         if (err) {
@@ -232,62 +242,45 @@ function sliderToHz(value) {
 function disableButtons() {
     elements.startBtn.disabled = true;
     elements.stopBtn.disabled = true;
-    elements.freqStartBtn.disabled = true;
-    elements.freqStopBtn.disabled = true;
 }
 
 // 设置事件监听
 function setupEventListeners() {
+    // ── 启动机器：全局 START，展开双电机控制面板 ──
     elements.startBtn.addEventListener('click', () => {
-        motorRunning = true;
+        machineRunning = true;
         elements.motorControl.classList.remove('hidden');
-        publishCommand('START', { duty: currentDuty });
+        elements.freqMotorControl.classList.remove('hidden');
+        publishCommand('START');
         animateButton(elements.startBtn);
     });
 
+    // ── 停止机器：全局 STOP，收起双电机控制面板 ──
     elements.stopBtn.addEventListener('click', () => {
-        motorRunning = false;
+        machineRunning = false;
         elements.motorControl.classList.add('hidden');
+        elements.freqMotorControl.classList.add('hidden');
         publishCommand('STOP');
         animateButton(elements.stopBtn);
     });
 
-    // 拖动时实时刷新数字显示 + 滑块填充色
+    // 电机1 占空比：拖动时刷新显示，松开后发送指令
     elements.dutySlider.addEventListener('input', () => {
         currentDuty = parseInt(elements.dutySlider.value);
         elements.dutyValue.textContent = currentDuty;
         updateSliderFill(currentDuty);
     });
-
-    // 松开后发送指令（避免频繁推送）
     elements.dutySlider.addEventListener('change', () => {
         currentDuty = parseInt(elements.dutySlider.value);
-        publishCommand('SET_DUTY', { duty: currentDuty });
+        publishCommand('SET_DUTY', { motor_id: 0x01, duty: currentDuty });
     });
 
-    // 频率控制电机 (0x02)
-    elements.freqStartBtn.addEventListener('click', () => {
-        freqMotorRunning = true;
-        elements.freqMotorControl.classList.remove('hidden');
-        publishCommand('START', { motor_id: 0x02, freq: sliderToHz(currentFreqSlider) });
-        animateButton(elements.freqStartBtn);
-    });
-
-    elements.freqStopBtn.addEventListener('click', () => {
-        freqMotorRunning = false;
-        elements.freqMotorControl.classList.add('hidden');
-        publishCommand('STOP', { motor_id: 0x02 });
-        animateButton(elements.freqStopBtn);
-    });
-
-    // 拖动时实时刷新频率显示 + 滑块填充色
+    // 电机2 频率：拖动时刷新显示，松开后发送指令
     elements.freqSlider.addEventListener('input', () => {
         currentFreqSlider = parseInt(elements.freqSlider.value);
         elements.freqValue.textContent = sliderToHz(currentFreqSlider);
         updateFreqSliderFill(currentFreqSlider);
     });
-
-    // 松开后发送频率指令
     elements.freqSlider.addEventListener('change', () => {
         currentFreqSlider = parseInt(elements.freqSlider.value);
         publishCommand('SET_FREQ', { motor_id: 0x02, freq: sliderToHz(currentFreqSlider) });

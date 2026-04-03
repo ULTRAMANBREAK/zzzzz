@@ -159,7 +159,17 @@ body {
     margin-bottom: 10px;
 }
 
-.motor-name  { font-size: 14px; font-weight: 600; }
+.motor-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    background: #6366f1;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+}
+.motor-label-freq { background: #0ea5e9; }
+.motor-name  { font-size: 14px; font-weight: 600; flex: 1; margin-left: 8px; }
 .motor-badge {
     font-size: 11px;
     font-family: 'Courier New', monospace;
