@@ -15,7 +15,7 @@ const TOPICS = {
 // 电机定义（可扩展）
 const MOTORS = {
     0x01: { id: 0x01, name: '直流减速电机', defaultDuty: 50 },
-    0x02: { id: 0x02, name: '86步进电机', defaultFreq: 0 }  // 0=1KHz, 100=2KHz
+    0x02: { id: 0x02, name: '86步进电机', defaultFreq: 0 }  // 0=1KHz, 100=8KHz
 };
 
 // 当前操作的电机 ID（后续多电机可改为动态切换）
@@ -233,9 +233,9 @@ function updateFreqSliderFill(value) {
         `linear-gradient(to right, #0ea5e9 0%, #0ea5e9 ${value}%, #d1d5db ${value}%, #d1d5db 100%)`;
 }
 
-// 频率映射：滑块值 0-100 → 1000-2000 Hz
+// 频率映射：滑块值 0-100 → 1000-8000 Hz
 function sliderToHz(value) {
-    return 1000 + value * 10;
+    return 1000 + value * 70;
 }
 
 // 禁用按钮
