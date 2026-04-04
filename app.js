@@ -7,9 +7,10 @@ const MQTT_CONFIG = {
 };
 
 const TOPICS = {
-    control:   'langou/device001/control',
-    status:    'langou/device001/status',
-    camStatus: 'langou/cam/status'
+    control:    'langou/device001/control',
+    status:     'langou/device001/status',
+    camStatus:  'langou/cam/status',
+    stm32Status: 'langou/device001/stm32status'
 };
 
 // 电机定义（可扩展）
@@ -39,7 +40,8 @@ const elements = {
     dutyValue: document.getElementById('dutyValue'),
     freqMotorControl: document.getElementById('freqMotorControl'),
     freqSlider: document.getElementById('freqSlider'),
-    freqValue: document.getElementById('freqValue')
+    freqValue: document.getElementById('freqValue'),
+    stm32Messages: document.getElementById('stm32Messages')
 };
 
 // 初始化
@@ -102,6 +104,14 @@ function handleConnect() {
             console.log('订阅成功:', TOPICS.camStatus);
         }
     });
+
+    mqttClient.subscribe(TOPICS.stm32Status, { qos: 1 }, (err) => {
+        if (err) {
+            console.error('订阅 STM32 主题失败:', err);
+        } else {
+            console.log('订阅成功:', TOPICS.stm32Status);
+        }
+    });
 }
 
 // 处理接收到的消息
@@ -117,6 +127,8 @@ function handleMessage(topic, message) {
             } catch (e) {
                 addStatusMessage(payload, 'info');
             }
+        } else if (topic === TOPICS.stm32Status) {
+            addStm32Message(payload);
         } else if (topic === TOPICS.camStatus) {
             try {
                 const data = JSON.parse(payload);
@@ -187,6 +199,34 @@ function addStatusMessage(message, type = 'info') {
     elements.statusMessages.insertBefore(messageDiv, elements.statusMessages.firstChild);
 
     const messages = elements.statusMessages.querySelectorAll('.status-item');
+    if (messages.length > 20) {
+        messages[messages.length - 1].remove();
+    }
+}
+
+// 添加 STM32 状态消息
+function addStm32Message(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'status-item info';
+
+    const timestamp = new Date().toLocaleTimeString('zh-CN', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+
+    const placeholder = elements.stm32Messages.querySelector('.placeholder');
+    if (placeholder) placeholder.remove();
+
+    messageDiv.innerHTML = `
+        <div>${message}</div>
+        <span class="timestamp">${timestamp}</span>
+    `;
+
+    elements.stm32Messages.insertBefore(messageDiv, elements.stm32Messages.firstChild);
+
+    const messages = elements.stm32Messages.querySelectorAll('.status-item');
     if (messages.length > 20) {
         messages[messages.length - 1].remove();
     }
