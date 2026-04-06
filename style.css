@@ -334,6 +334,37 @@ body {
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── 频率加减按钮 ── */
+.freq-adj-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.btn-adj {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid #0ea5e9;
+    background: #e0f2fe;
+    color: #0ea5e9;
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+.btn-adj:active { background: #bae6fd; transform: scale(0.92); }
+.btn-adj:disabled { opacity: 0.35; cursor: not-allowed; }
+
 /* ── 频率控制电机差异样式 ── */
 .btn-freq-start { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
 .btn-freq-start:active:not(:disabled) { transform: scale(0.97); }

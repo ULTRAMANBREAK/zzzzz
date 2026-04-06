@@ -16,7 +16,7 @@ const TOPICS = {
 // 电机定义（可扩展）
 const MOTORS = {
     0x01: { id: 0x01, name: '直流减速电机', defaultDuty: 50 },
-    0x02: { id: 0x02, name: '86步进电机', defaultFreq: 0 }  // 0=1KHz, 100=8KHz
+    0x02: { id: 0x02, name: '86步进电机', defaultFreq: 1000 }  // Hz，范围 1000-140000
 };
 
 // 当前操作的电机 ID（后续多电机可改为动态切换）
@@ -26,7 +26,7 @@ const ACTIVE_MOTOR_ID = 0x01;
 let mqttClient = null;
 let machineRunning = false;
 let currentDuty = MOTORS[ACTIVE_MOTOR_ID].defaultDuty;
-let currentFreqSlider = MOTORS[0x02].defaultFreq;  // 0-100，对应 1000-2000 Hz
+let currentFreq = MOTORS[0x02].defaultFreq;  // Hz，范围 1000-140000，步长 1000
 
 // DOM 元素
 const elements = {
@@ -39,7 +39,8 @@ const elements = {
     dutySlider: document.getElementById('dutySlider'),
     dutyValue: document.getElementById('dutyValue'),
     freqMotorControl: document.getElementById('freqMotorControl'),
-    freqSlider: document.getElementById('freqSlider'),
+    freqDecBtn: document.getElementById('freqDecBtn'),
+    freqIncBtn: document.getElementById('freqIncBtn'),
     freqValue: document.getElementById('freqValue'),
     stm32Messages: document.getElementById('stm32Messages')
 };
@@ -51,10 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.dutyValue.textContent = currentDuty;
     updateSliderFill(currentDuty);
 
-    // 同步频率滑块初始值
-    elements.freqSlider.value = currentFreqSlider;
-    elements.freqValue.textContent = sliderToHz(currentFreqSlider);
-    updateFreqSliderFill(currentFreqSlider);
+    // 同步频率显示初始值
+    elements.freqValue.textContent = currentFreq;
 
     connectMQTT();
     setupEventListeners();
@@ -267,16 +266,10 @@ function updateSliderFill(value) {
         `linear-gradient(to right, #6366f1 0%, #6366f1 ${value}%, #d1d5db ${value}%, #d1d5db 100%)`;
 }
 
-// 更新频率滑块填充色
-function updateFreqSliderFill(value) {
-    elements.freqSlider.style.background =
-        `linear-gradient(to right, #0ea5e9 0%, #0ea5e9 ${value}%, #d1d5db ${value}%, #d1d5db 100%)`;
-}
-
-// 频率映射：滑块值 0-100 → 1000-8000 Hz
-function sliderToHz(value) {
-    return 1000 + value * 70;
-}
+// 频率范围约束
+const FREQ_MIN = 1000;
+const FREQ_MAX = 140000;
+const FREQ_STEP = 1000;
 
 // 禁用按钮
 function disableButtons() {
@@ -315,15 +308,18 @@ function setupEventListeners() {
         publishCommand('SET_DUTY', { motor_id: 0x01, duty: currentDuty });
     });
 
-    // 电机2 频率：拖动时刷新显示，松开后发送指令
-    elements.freqSlider.addEventListener('input', () => {
-        currentFreqSlider = parseInt(elements.freqSlider.value);
-        elements.freqValue.textContent = sliderToHz(currentFreqSlider);
-        updateFreqSliderFill(currentFreqSlider);
+    // 电机2 频率：加减按钮，每次 ±1KHz
+    elements.freqDecBtn.addEventListener('click', () => {
+        if (currentFreq - FREQ_STEP < FREQ_MIN) return;
+        currentFreq -= FREQ_STEP;
+        elements.freqValue.textContent = currentFreq;
+        publishCommand('SET_FREQ', { motor_id: 0x02, freq: currentFreq });
     });
-    elements.freqSlider.addEventListener('change', () => {
-        currentFreqSlider = parseInt(elements.freqSlider.value);
-        publishCommand('SET_FREQ', { motor_id: 0x02, freq: sliderToHz(currentFreqSlider) });
+    elements.freqIncBtn.addEventListener('click', () => {
+        if (currentFreq + FREQ_STEP > FREQ_MAX) return;
+        currentFreq += FREQ_STEP;
+        elements.freqValue.textContent = currentFreq;
+        publishCommand('SET_FREQ', { motor_id: 0x02, freq: currentFreq });
     });
 
     // 防止移动端双击缩放
