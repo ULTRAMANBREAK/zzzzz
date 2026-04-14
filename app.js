@@ -279,9 +279,20 @@ function disableButtons() {
 
 // 设置事件监听
 function setupEventListeners() {
-    // ── 启动机器：全局 START，展开双电机控制面板 ──
+    // ── 启动机器：全局 START，展开双电机控制面板，重置数值为默认值 ──
     elements.startBtn.addEventListener('click', () => {
         machineRunning = true;
+
+        // 重置占空比为默认值
+        currentDuty = MOTORS[ACTIVE_MOTOR_ID].defaultDuty;
+        elements.dutySlider.value = currentDuty;
+        elements.dutyValue.textContent = currentDuty;
+        updateSliderFill(currentDuty);
+
+        // 重置频率为默认值
+        currentFreq = MOTORS[0x02].defaultFreq;
+        elements.freqValue.textContent = currentFreq;
+
         elements.motorControl.classList.remove('hidden');
         elements.freqMotorControl.classList.remove('hidden');
         publishCommand('START');
