@@ -15,7 +15,7 @@ const TOPICS = {
 
 // 电机定义（可扩展）
 const MOTORS = {
-    0x01: { id: 0x01, name: '直流减速电机', defaultDuty: 50 },
+    0x01: { id: 0x01, name: '直流减速电机', defaultDuty: 20 },
     0x02: { id: 0x02, name: '86步进电机', defaultFreq: 1000 }  // Hz，范围 1000-140000
 };
 
