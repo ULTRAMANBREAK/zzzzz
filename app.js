@@ -296,6 +296,7 @@ function setupEventListeners() {
         elements.motorControl.classList.remove('hidden');
         elements.freqMotorControl.classList.remove('hidden');
         publishCommand('START');
+        publishCommand('SET_DUTY', { motor_id: 0x01, duty: currentDuty });
         animateButton(elements.startBtn);
     });
 
