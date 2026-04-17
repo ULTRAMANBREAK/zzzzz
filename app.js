@@ -392,3 +392,172 @@ window.addEventListener('beforeunload', () => {
         mqttClient.end();
     }
 });
+
+// ── AI 助手模块 ──
+const AI_CONFIG = {
+    baseUrlKey: 'ai_base_url',
+    apiKeyKey:  'ai_api_key'
+};
+
+const aiSettingsBtn  = document.getElementById('aiSettingsBtn');
+const aiSettings     = document.getElementById('aiSettings');
+const aiBaseUrlInput = document.getElementById('aiBaseUrl');
+const aiApiKeyInput  = document.getElementById('aiApiKey');
+const aiSaveBtn      = document.getElementById('aiSaveBtn');
+const aiSaveTip      = document.getElementById('aiSaveTip');
+const aiAnalyzeBtn   = document.getElementById('aiAnalyzeBtn');
+const aiAutoToggle   = document.getElementById('aiAutoToggle');
+const aiIntervalSel  = document.getElementById('aiInterval');
+const aiResultArea   = document.getElementById('aiResultArea');
+
+// 初始化：从 localStorage 读取已保存配置
+(function initAiConfig() {
+    const savedUrl = localStorage.getItem(AI_CONFIG.baseUrlKey);
+    const savedKey = localStorage.getItem(AI_CONFIG.apiKeyKey);
+    if (savedUrl) aiBaseUrlInput.value = savedUrl;
+    if (savedKey) aiApiKeyInput.value  = savedKey;
+})();
+
+// 设置区折叠/展开
+aiSettingsBtn.addEventListener('click', () => {
+    aiSettings.classList.toggle('hidden');
+});
+
+// 保存配置
+aiSaveBtn.addEventListener('click', () => {
+    const url = aiBaseUrlInput.value.trim().replace(/\/$/, ''); // 去尾部斜杠
+    const key = aiApiKeyInput.value.trim();
+    localStorage.setItem(AI_CONFIG.baseUrlKey, url);
+    localStorage.setItem(AI_CONFIG.apiKeyKey,  key);
+    aiSaveTip.classList.remove('hidden');
+    setTimeout(() => aiSaveTip.classList.add('hidden'), 2000);
+});
+
+/**
+ * 截取当前 MJPEG 帧，返回纯 base64 字符串（JPEG）
+ * 若跨域污染则抛出错误
+ */
+function captureFrame() {
+    const img = document.getElementById('mjpeg-stream');
+    const canvas = document.createElement('canvas');
+    canvas.width  = img.naturalWidth  || 640;
+    canvas.height = img.naturalHeight || 480;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    try {
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        return dataUrl.split(',')[1]; // 去掉 "data:image/jpeg;base64," 前缀
+    } catch (e) {
+        throw new Error('Canvas 跨域污染：请检查 ESP32 是否已返回 Access-Control-Allow-Origin 头');
+    }
+}
+
+function showAiResult(html) {
+    aiResultArea.innerHTML = html;
+}
+
+let aiAnalyzing = false; // 防止并发
+
+async function analyzeClam() {
+    if (aiAnalyzing) return;
+
+    const baseUrl = localStorage.getItem(AI_CONFIG.baseUrlKey);
+    const apiKey  = localStorage.getItem(AI_CONFIG.apiKeyKey);
+
+    if (!baseUrl || !apiKey) {
+        showAiResult('<div class="ai-result-error">请先点击 ⚙ 填写中转站 URL 和 API Key</div>');
+        aiSettings.classList.remove('hidden');
+        return;
+    }
+
+    let base64;
+    try {
+        base64 = captureFrame();
+    } catch (e) {
+        showAiResult(`<div class="ai-result-error">${e.message}</div>`);
+        return;
+    }
+
+    aiAnalyzing = true;
+    aiAnalyzeBtn.disabled = true;
+    showAiResult('<div class="ai-analyzing">分析中，请稍候...</div>');
+
+    const currentFreq = parseInt(document.getElementById('freqValue').textContent, 10) || 1000;
+    const prompt = `你是蛤蜊破碎设备的专业运维工程师。请分析图像中蛤蜊的破碎状态。\n当前参数：86步进电机频率 ${currentFreq} Hz（范围 1000~140000 Hz）。\n\n请严格按以下JSON格式回复（不要有其他文字）：\n{"analysis":"对破碎状态的简短描述（50字内）","freq":推荐频率数字,"needAdjust":true或false}`;
+
+    try {
+        const resp = await fetch(`${baseUrl}/v1/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o',
+                max_tokens: 300,
+                messages: [{
+                    role: 'user',
+                    content: [
+                        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } },
+                        { type: 'text', text: prompt }
+                    ]
+                }]
+            })
+        });
+
+        if (!resp.ok) {
+            const errText = await resp.text();
+            throw new Error(`API 错误 ${resp.status}: ${errText.substring(0, 100)}`);
+        }
+
+        const data = await resp.json();
+        const content = data.choices?.[0]?.message?.content || '';
+
+        let parsed;
+        try {
+            const match = content.match(/\{[\s\S]*?\}/);
+            parsed = JSON.parse(match ? match[0] : content);
+        } catch {
+            showAiResult(`<div class="ai-result-analysis">${content}</div>`);
+            return;
+        }
+
+        const { analysis = '', freq, needAdjust } = parsed;
+        let html = `<div class="ai-result-analysis">${analysis}</div>`;
+        if (needAdjust && freq) {
+            html += `<div class="ai-result-freq">📡 推荐频率：${freq} Hz</div>`;
+        } else {
+            html += `<div class="ai-result-ok">✓ 当前频率参数良好</div>`;
+        }
+        showAiResult(html);
+
+    } catch (e) {
+        showAiResult(`<div class="ai-result-error">请求失败：${e.message}</div>`);
+    } finally {
+        aiAnalyzing = false;
+        aiAnalyzeBtn.disabled = false;
+    }
+}
+
+aiAnalyzeBtn.addEventListener('click', analyzeClam);
+
+let aiTimer = null;
+
+aiAutoToggle.addEventListener('change', () => {
+    if (aiAutoToggle.checked) {
+        const seconds = parseInt(aiIntervalSel.value, 10);
+        aiTimer = setInterval(analyzeClam, seconds * 1000);
+        // 立即触发一次
+        analyzeClam();
+    } else {
+        clearInterval(aiTimer);
+        aiTimer = null;
+    }
+});
+
+// 切换间隔时：若自动模式已开启，重置定时器
+aiIntervalSel.addEventListener('change', () => {
+    if (!aiAutoToggle.checked) return;
+    clearInterval(aiTimer);
+    const seconds = parseInt(aiIntervalSel.value, 10);
+    aiTimer = setInterval(analyzeClam, seconds * 1000);
+});

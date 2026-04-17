@@ -523,3 +523,212 @@ body {
 .status-messages::-webkit-scrollbar { width: 4px; }
 .status-messages::-webkit-scrollbar-track { background: transparent; }
 .status-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+/* ── AI 助手面板 ── */
+.ai-panel {
+    background: var(--card-bg);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.ai-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px 0;
+}
+
+.ai-panel-header h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ai-settings-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.ai-settings-btn:hover { background: #f3f4f6; }
+
+/* 设置区 */
+.ai-settings {
+    padding: 10px 14px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: slideIn 0.2s ease-out;
+}
+
+.ai-settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ai-settings-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.ai-settings-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: #f9fafb;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+}
+.ai-settings-input:focus {
+    border-color: #8b5cf6;
+    background: #fff;
+}
+
+.ai-save-btn {
+    align-self: flex-start;
+    padding: 7px 16px;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.ai-save-btn:active { transform: scale(0.96); }
+
+.ai-save-tip {
+    font-size: 12px;
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+/* 操作区 */
+.ai-controls {
+    padding: 10px 14px 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ai-analyze-btn {
+    flex: 1;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    flex-direction: row;
+    padding: 12px 14px;
+    gap: 8px;
+}
+.ai-analyze-btn .btn-icon { font-size: 18px; }
+.ai-analyze-btn .btn-text { font-size: 13px; }
+.ai-analyze-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ai-auto-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.ai-auto-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.ai-interval-select {
+    padding: 5px 6px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-primary);
+    background: #f9fafb;
+    outline: none;
+    cursor: pointer;
+}
+
+/* 结果区 */
+.ai-result-area {
+    margin: 0 10px 10px;
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    min-height: 56px;
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.55;
+}
+
+.ai-result-placeholder {
+    color: var(--text-secondary);
+}
+
+.ai-result-analysis {
+    margin-bottom: 6px;
+}
+
+.ai-result-freq {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ede9fe;
+    border: 1px solid #c4b5fd;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7c3aed;
+    margin-top: 2px;
+}
+
+.ai-result-ok {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.ai-result-error {
+    color: var(--danger-color);
+    font-size: 12px;
+}
+
+.ai-analyzing {
+    color: #8b5cf6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ai-analyzing::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #8b5cf6;
+    border-top-color: transparent;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

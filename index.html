@@ -94,8 +94,53 @@
                 <h2>📹 实时监控</h2>
                 <div class="camera-container">
                     <div class="camera-frame" id="cameraFrame">
-                        <img id="mjpeg-stream" class="camera-image" src="http://192.168.5.123/stream" alt="ESP32视频流">
+                        <img id="mjpeg-stream" class="camera-image" crossorigin="anonymous" src="http://192.168.5.123/stream" alt="ESP32视频流">
                     </div>
+                </div>
+            </div>
+
+            <!-- AI 助手 -->
+            <div class="ai-panel" id="aiPanel">
+                <div class="ai-panel-header">
+                    <h2>🤖 AI 助手</h2>
+                    <button class="ai-settings-btn" id="aiSettingsBtn" title="设置">⚙</button>
+                </div>
+
+                <!-- 设置区（可折叠） -->
+                <div class="ai-settings hidden" id="aiSettings">
+                    <div class="ai-settings-field">
+                        <label class="ai-settings-label">中转站 Base URL</label>
+                        <input type="text" id="aiBaseUrl" class="ai-settings-input" placeholder="https://your-proxy.com">
+                    </div>
+                    <div class="ai-settings-field">
+                        <label class="ai-settings-label">API Key</label>
+                        <input type="password" id="aiApiKey" class="ai-settings-input" placeholder="sk-...">
+                    </div>
+                    <button class="ai-save-btn" id="aiSaveBtn">保存配置</button>
+                    <div class="ai-save-tip hidden" id="aiSaveTip">✓ 已保存</div>
+                </div>
+
+                <!-- 操作区 -->
+                <div class="ai-controls">
+                    <button class="btn ai-analyze-btn" id="aiAnalyzeBtn">
+                        <span class="btn-icon">📸</span>
+                        <span class="btn-text">分析蛤蜊状态</span>
+                    </button>
+                    <div class="ai-auto-row">
+                        <label class="ai-auto-label">
+                            <input type="checkbox" id="aiAutoToggle"> 自动
+                        </label>
+                        <select id="aiInterval" class="ai-interval-select">
+                            <option value="10">10s</option>
+                            <option value="30" selected>30s</option>
+                            <option value="60">60s</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 结果区 -->
+                <div class="ai-result-area" id="aiResultArea">
+                    <div class="ai-result-placeholder">等待分析...</div>
                 </div>
             </div>
 
