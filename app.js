@@ -1,3 +1,49 @@
+// ── 登录逻辑 ──
+(function () {
+    const CREDENTIALS = { user: 'lazydog', pass: 'qwe44944' };
+    const overlay  = document.getElementById('loginOverlay');
+    const userInput = document.getElementById('loginUser');
+    const passInput = document.getElementById('loginPass');
+    const loginBtn  = document.getElementById('loginBtn');
+    const errorBox  = document.getElementById('loginError');
+
+    // 已登录则直接隐藏遮罩
+    if (sessionStorage.getItem('auth') === '1') {
+        overlay.classList.add('hidden');
+        return;
+    }
+
+    function attempt() {
+        const u = userInput.value.trim();
+        const p = passInput.value;
+        if (u === CREDENTIALS.user && p === CREDENTIALS.pass) {
+            sessionStorage.setItem('auth', '1');
+            overlay.style.transition = 'opacity 0.3s';
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        } else {
+            errorBox.classList.remove('hidden');
+            passInput.value = '';
+            passInput.focus();
+            userInput.style.borderColor = '#ef4444';
+            passInput.style.borderColor = '#ef4444';
+            setTimeout(() => {
+                userInput.style.borderColor = '';
+                passInput.style.borderColor = '';
+            }, 1200);
+        }
+    }
+
+    loginBtn.addEventListener('click', attempt);
+    passInput.addEventListener('keydown', e => { if (e.key === 'Enter') attempt(); });
+    userInput.addEventListener('keydown', e => { if (e.key === 'Enter') passInput.focus(); });
+
+    // 输入时隐藏错误提示
+    [userInput, passInput].forEach(el =>
+        el.addEventListener('input', () => errorBox.classList.add('hidden'))
+    );
+})();
+
 // MQTT 配置
 const MQTT_CONFIG = {
     host: 'broker.emqx.io',
